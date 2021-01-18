@@ -13,7 +13,7 @@ def generate_cpp_module(fname='pau_cuda.cpp', coefficients=coefficients):
 \#include <vector>
 \#include <iostream>
 
-#define CHECK_CUDA(x) AT_ASSERTM(x.type().is_cuda(), #x " must be a CUDA tensor")
+#define CHECK_CUDA(x) AT_ASSERTM(x.is_cuda(), #x " must be a CUDA tensor")
 #define CHECK_CONTIGUOUS(x) AT_ASSERTM(x.is_contiguous(), #x " must be contiguous")
 #define CHECK_INPUT(x) CHECK_CUDA(x); CHECK_CONTIGUOUS(x)
 
@@ -120,13 +120,13 @@ at::Tensor pau_cuda_forward_$coef[0]_$coef[1](torch::Tensor x, torch::Tensor n, 
     int blockSize = THREADS_PER_BLOCK;
     int numBlocks = (x_size + blockSize - 1) / blockSize;
 
-    AT_DISPATCH_FLOATING_TYPES(x.type(), "pau_cuda_forward_$coef[0]_$coef[1]", ([&] {
+    AT_DISPATCH_FLOATING_TYPES(x.scalar_type(), "pau_cuda_forward_$coef[0]_$coef[1]", ([&] {
     pau_cuda_forward_kernel_$coef[0]_$coef[1]<scalar_t>
         <<<numBlocks, blockSize>>>(
-            x.data<scalar_t>(),
-            n.data<scalar_t>(),
-            d.data<scalar_t>(),
-            result.data<scalar_t>(),
+            x.data_ptr<scalar_t>(),
+            n.data_ptr<scalar_t>(),
+            d.data_ptr<scalar_t>(),
+            result.data_ptr<scalar_t>(),
             x_size);
         }));
 
@@ -210,7 +210,7 @@ __global__ void pau_cuda_backward_kernel_$coef[0]_$coef[1](
         + scalar_t($value2.0)*n_$value2*xp$idx
         #end
         ;
-        scalar_t S = copysign( scalar_t(1.0), xp1 ) * (ad_0 
+        scalar_t S = copysign( scalar_t(1.0), xp1 ) * (ad_0
 
         #foreach( $idx in [2..$coef[1]] )#set( $value = $idx - 1 )
         + scalar_t($idx.0)*ad_$value*axp$value
@@ -221,7 +221,7 @@ __global__ void pau_cuda_backward_kernel_$coef[0]_$coef[1](
 
         scalar_t grad_o = grad_output[index];
 
-        scalar_t d_i_x = (R/Q + S*mpq2); 
+        scalar_t d_i_x = (R/Q + S*mpq2);
         d_x[index] = d_i_x * grad_o;
 
 
@@ -231,7 +231,7 @@ __global__ void pau_cuda_backward_kernel_$coef[0]_$coef[1](
         #end
 
 
-        scalar_t d_i_n0 = scalar_t(1.0)/Q; 
+        scalar_t d_i_n0 = scalar_t(1.0)/Q;
         d_n0 += d_i_n0 * grad_o;
 
         #foreach( $idx in [1..$coef[0]] )#set( $value = $idx - 1 )
@@ -274,16 +274,16 @@ std::vector<torch::Tensor> pau_cuda_backward_$coef[0]_$coef[1](torch::Tensor gra
 
     int blockSize = THREADS_PER_BLOCK;
 
-    AT_DISPATCH_FLOATING_TYPES(x.type(), "pau_cuda_backward_$coef[0]_$coef[1]", ([&] {
+    AT_DISPATCH_FLOATING_TYPES(x.scalar_type(), "pau_cuda_backward_$coef[0]_$coef[1]", ([&] {
     pau_cuda_backward_kernel_$coef[0]_$coef[1]<scalar_t>
         <<<16, blockSize>>>(
-            grad_output.data<scalar_t>(),
-            x.data<scalar_t>(),
-            n.data<scalar_t>(),
-            d.data<scalar_t>(),
-            d_x.data<scalar_t>(),
-            d_n.data<double>(),
-            d_d.data<double>(),
+            grad_output.data_ptr<scalar_t>(),
+            x.data_ptr<scalar_t>(),
+            n.data_ptr<scalar_t>(),
+            d.data_ptr<scalar_t>(),
+            d_x.data_ptr<scalar_t>(),
+            d_n.data_ptr<double>(),
+            d_d.data_ptr<double>(),
             x_size);
     }));
 
@@ -311,7 +311,7 @@ setup(
         ],
                       extra_compile_args={'cxx': [],
                                           'nvcc': ['-gencode=arch=compute_60,code="sm_60,compute_60"', '-lineinfo',
-                                                   "-ccbin=gcc-6.3.0"]}
+                                                   "-ccbin=gcc-6"]}
                       ),
         # CUDAExtension('pau_cuda_unrestricted', [
         #    'pau_cuda_unrestricted.cpp',
