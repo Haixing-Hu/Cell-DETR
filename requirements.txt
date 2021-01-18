@@ -6,3 +6,5 @@ scipy
 tqdm
 setproctitle
 tikzplotlib
+airspeed
+ninja
