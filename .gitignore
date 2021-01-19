@@ -76,3 +76,5 @@ pade_activation_unit/cuda/build/
 pade_activation_unit/cuda/pau.egg-info/
 pade_activation_unit/cuda/dist/
 __pycache__
+
+saved_data
