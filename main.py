@@ -114,19 +114,28 @@ if __name__ == '__main__':
     else:
         learning_rate_schedule = None
     # Init datasets
-    training_dataset = DataLoader(
-        CellInstanceSegmentation(path=os.path.join(args.path_to_data, "train"),
-                                 augmentation_p=args.augmentation_p, two_classes=not args.three_classes),
-        collate_fn=collate_function_cell_instance_segmentation, batch_size=args.batch_size, num_workers=20,
-        shuffle=True)
-    validation_dataset = DataLoader(
-        CellInstanceSegmentation(path=os.path.join(args.path_to_data, "val"),
-                                 augmentation_p=0.0, two_classes=not args.three_classes),
-        collate_fn=collate_function_cell_instance_segmentation, batch_size=1, num_workers=1, shuffle=False)
-    test_dataset = DataLoader(
-        CellInstanceSegmentation(path=os.path.join(args.path_to_data, "test"),
-                                 augmentation_p=0.0, two_classes=not args.three_classes),
-        collate_fn=collate_function_cell_instance_segmentation, batch_size=1, num_workers=1, shuffle=False)
+    if args.train:
+        training_dataset = DataLoader(
+            CellInstanceSegmentation(path=os.path.join(args.path_to_data, "train"),
+                                    augmentation_p=args.augmentation_p, two_classes=not args.three_classes),
+            collate_fn=collate_function_cell_instance_segmentation, batch_size=args.batch_size, num_workers=20,
+            shuffle=True)
+    else:
+        training_dataset = None
+    if args.val:
+        validation_dataset = DataLoader(
+            CellInstanceSegmentation(path=os.path.join(args.path_to_data, "val"),
+                                    augmentation_p=0.0, two_classes=not args.three_classes),
+            collate_fn=collate_function_cell_instance_segmentation, batch_size=1, num_workers=1, shuffle=False)
+    else:
+        validation_dataset = None
+    if args.test:
+        test_dataset = DataLoader(
+            CellInstanceSegmentation(path=os.path.join(args.path_to_data, "test"),
+                                    augmentation_p=0.0, two_classes=not args.three_classes),
+            collate_fn=collate_function_cell_instance_segmentation, batch_size=1, num_workers=1, shuffle=False)
+    else:
+        test_dataset = None
     # Model wrapper
     model_wrapper = ModelWrapper(detr=detr,
                                  detr_optimizer=detr_optimizer,
